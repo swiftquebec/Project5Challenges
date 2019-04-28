@@ -20,6 +20,9 @@ class ViewController: UITableViewController {
         // To allow user to enter words
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(promptForAnswer))
         
+        // Add leftBarButton with "refresh" icon to restart game
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(startGame))
+        
         // Load start.txt and then convert it to an array
         // First, find the path
         // then fill the allWords array
@@ -35,7 +38,7 @@ class ViewController: UITableViewController {
         startGame()
     }
     
-    func startGame() {
+    @objc func startGame() {
         title = allWords.randomElement()
         usedWords.removeAll(keepingCapacity: true)
         // tableView property comes from UITableViewController
@@ -76,17 +79,12 @@ class ViewController: UITableViewController {
     }
     
     func submit(_ answer: String) {
-        
         let lowerAnswer = answer.lowercased()
-        
-        let errorTitle: String
-        let errorMessage: String
-        
         
         if isPossible(word: lowerAnswer) {
             if isOriginal(word: lowerAnswer) {
                 if isReal(word: lowerAnswer) {
-                    usedWords.insert(answer, at: 0)
+                    usedWords.insert(lowerAnswer, at: 0)
                     
                     // Inserting cell is easier than reloading
                     // In this case the new word will slide in from the top
@@ -97,18 +95,17 @@ class ViewController: UITableViewController {
                     return
                     
                 } else {
-                    errorTitle = "Word not recognized"
-                    errorMessage = "You just can't make them up, you know!"
+                    showErrorMessage(errorTitle: "Word not recognized", errorMessage: "Words can't be made up, less than 3 letters or be the same as the start word!")
                 }
             } else {
-                errorTitle = "Word already used"
-                errorMessage = "Be more original!"
+                showErrorMessage(errorTitle: "Word already used", errorMessage: "Be more original!")
             }
         } else {
-            errorTitle = "Word not possible"
-            errorMessage = "You can't spell that word from \(title!.lowercased())."
+            showErrorMessage(errorTitle: "Word not possible", errorMessage: "You can't spell that word from \(title!.lowercased()).")
         }
-        
+    }
+    
+    func showErrorMessage(errorTitle: String, errorMessage: String) {
         // Use UIAlertController to present alert message
         let ac = UIAlertController(title: errorTitle, message: errorMessage, preferredStyle: .alert)
         ac.addAction(UIAlertAction(title: "OK", style: .default))
@@ -136,6 +133,11 @@ class ViewController: UITableViewController {
     }
     
     func isReal(word: String) -> Bool {
+        // Check to see if word is less than 3 letters *or*
+        // if the inputed word is the same as the start word
+        if word.count < 3 || word == title {
+            return false
+        }
         
         // Use UITextChecker to check for spelling.
         // Has problems interacting with Swift, thus the repeated NS references.
@@ -147,6 +149,5 @@ class ViewController: UITableViewController {
         // If no spelling mistakes, the function returns true:
         return misspelledRange.location == NSNotFound
     }
-    
 }
 
